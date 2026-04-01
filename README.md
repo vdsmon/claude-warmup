@@ -1,6 +1,8 @@
 # claude-warmup
 
-Trick Claude Code's 5-hour usage window into resetting when you actually need it.
+Manipulate Claude Code's 5-hour usage window into resetting when you actually need it.
+
+EDIT: You can apply the same concept and achieve the exact same goal in a "native" way by using a Claude Code Web scheduled task: https://claude.ai/code/scheduled. It works flawlessly! The "Why" section below is still very useful for visualizing why would you do this at all.
 
 ## Why
 
@@ -11,9 +13,8 @@ So if you start at 8:30 AM and burn through your budget by 11, you're locked out
 The fix is dumb and it works: fire a throwaway message before you start working. A GitHub Actions cron sends "hi" to Haiku at 6:15 AM. The window floors to 6 AM, runs until 11. By the time you've hit the limit, it resets right away. Your next message anchors a fresh window through 4 PM.
 
 Example schedule:
-
-```text
-           6am     7     8     9    10    11    12    1pm    2     3     4     5     6
+```markdown
+            6am    7     8     9    10    11    12    1pm    2     3     4     5    6pm
              |     |     |     |     |     |     |     |     |     |     |     |     |
 
 Before:                  [========== window 1 =========]
@@ -27,7 +28,11 @@ After:       [========== window 1 =========]
               ░░ idle ░░  work ~8:30am-11am
                                            [========== window 2 =========]
                                                    work ~11am-4pm
+                                                                         [== win 3 ==]
+                                                                         work ~4pm-6pm
 ```
+
+> As you can see, we are able to squeeze another fresh window starting at 4pm in this case.
 
 ## How it works
 

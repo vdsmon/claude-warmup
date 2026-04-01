@@ -60,10 +60,12 @@ Paste when prompted.
 
 ### 4. Set your schedule
 
-Default is weekdays at 9:15 UTC. Change it with a repo variable:
+Default is weekdays at 11:15 UTC.
 
-```bash
-gh variable set WARMUP_CRON --body "15 11 * * 1-5"
+GitHub Actions requires `on.schedule.cron` to be a literal value in the workflow file, so changing the schedule means editing `.github/workflows/warmup.yml` and updating this line:
+
+```yml
+- cron: '15 11 * * 1-5'
 ```
 
 That's a standard cron expression in UTC. Common conversions:
@@ -83,8 +85,16 @@ Pick something 2-4 hours before you usually start working (really depends on you
 
 ### 5. Test it
 
+If this is a fresh fork, open the repo's `Actions` tab once and enable workflows if GitHub asks.
+
+Optional but useful: set your fork as the default GitHub CLI target in this clone.
+
 ```bash
-gh workflow run warmup.yml
+gh repo set-default <your-user>/claude-warmup
+```
+
+```bash
+gh workflow run warmup.yml --repo <your-user>/claude-warmup
 ```
 
 Check the logs. You should see a Haiku response or a rate-limit message. Both mean it worked.

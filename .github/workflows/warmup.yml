@@ -5,11 +5,25 @@ on:
     - cron: '00 9 * * 1-5'
   workflow_dispatch: {}
 
+concurrency:
+  group: claude-warmup
+  cancel-in-progress: true
+
 jobs:
   warmup:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
+      - name: Validate configuration
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_OAUTH_TOKEN }}
+        run: |
+          if [ -z "${CLAUDE_CODE_OAUTH_TOKEN}" ]; then
+            echo "CLAUDE_OAUTH_TOKEN secret is not set."
+            echo "Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 
@@ -19,5 +33,24 @@ jobs:
         run: |
           mkdir -p ~/.claude
           echo '{"hasCompletedOnboarding":true}' > ~/.claude.json
-          claude -p "hi" --model haiku --no-session-persistence 2>&1 || true
-          echo "✓ Warmup complete"
+          output_file="$(mktemp)"
+          set +e
+          claude -p "hi" --model haiku --no-session-persistence >"$output_file" 2>&1
+          status=$?
+          set -e
+          cat "$output_file"
+
+          if [ $status -eq 0 ]; then
+            echo "Claude warmup request succeeded."
+            echo "✓ Warmup complete"
+            exit 0
+          fi
+
+          if grep -qi "rate limit" "$output_file"; then
+            echo "Claude reported a rate limit; treating as warmup success."
+            echo "✓ Warmup complete"
+            exit 0
+          fi
+
+          echo "Claude warmup failed with an unexpected error."
+          exit $status

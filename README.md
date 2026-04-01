@@ -11,7 +11,8 @@ So if you start at 8:30 AM and burn through your budget by 11, you're locked out
 The fix is dumb and it works: fire a throwaway message before you start working. A GitHub Actions cron sends "hi" to Haiku at 6:15 AM. The window floors to 6 AM, runs until 11. By the time you've hit the limit, it resets right away. Your next message anchors a fresh window through 4 PM.
 
 Example schedule:
-```
+
+```text
            6am     7     8     9    10    11    12    1pm    2     3     4     5     6
              |     |     |     |     |     |     |     |     |     |     |     |     |
 
@@ -71,7 +72,7 @@ GitHub Actions requires `on.schedule.cron` to be a literal value in the workflow
 That's a standard cron expression in UTC. Common conversions:
 
 | Timezone | 6:15 AM local in UTC | Cron |
-|---|---|---|
+| --- | --- | --- |
 | US Pacific (UTC-7) | 1:15 PM | `15 13 * * 1-5` |
 | US Eastern (UTC-4) | 10:15 AM | `15 10 * * 1-5` |
 | US Central (UTC-5) | 11:15 AM | `15 11 * * 1-5` |
@@ -123,6 +124,20 @@ Some things about how Claude Code's 5-hour window actually works that aren't wel
 Yeah. `claude -p "hi" --model haiku --no-session-persistence` in a cron or macOS launchd does the same thing. GitHub Actions is just easier because your machine doesn't need to be awake at 6 AM.
 
 **Token expiry?** About a year. Set a reminder.
+
+## Troubleshooting
+
+**`workflow not found on the default branch`**
+The workflow file is missing from your fork's default branch, or GitHub Actions has not been enabled for the fork yet. Push `.github/workflows/warmup.yml` to your fork's default branch, then open the `Actions` tab once and enable workflows if prompted.
+
+**`Must have admin rights to Repository`**
+You're probably dispatching against the upstream repo instead of your fork. Run `gh workflow run warmup.yml --repo <your-user>/claude-warmup` or set the default with `gh repo set-default <your-user>/claude-warmup`.
+
+**`CLAUDE_OAUTH_TOKEN secret is not set`**
+Add the secret in your fork under `Settings > Secrets and variables > Actions`, then rerun the workflow.
+
+**Unexpected Claude CLI failure**
+Check the workflow logs. The job now prints the full Claude CLI output and only treats explicit rate-limit responses as expected.
 
 ## License
 
